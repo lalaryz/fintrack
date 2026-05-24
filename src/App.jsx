@@ -5,8 +5,8 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-// ─── MOCK DATA (SUDAH DIPECAH BERDASARKAN GOAL SEPERTI DI SPREADSHEET) ────────
-const ACCOUNTS = [
+// ─── INITIAL MOCK DATA (SUDAH DIPECAH BERDASARKAN GOAL SEPERTI DI SPREADSHEET) ────────
+const INITIAL_ACCOUNTS = [
   // 🛡️ Alokasi Dana Darurat
   { id: 1,  name: "JAGO Emergency",        institution: "Jago",         type: "Bank Digital",  goal: "Dana Darurat",        balance: 15_000_000, color: "#ef4444" },
   { id: 2,  name: "Bibit Reksadana (DD)",  institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Darurat",        balance: 10_000_000, color: "#f87171" },
@@ -23,7 +23,7 @@ const ACCOUNTS = [
   // 🏠 Alokasi Masa Depan / Rumah
   { id: 10, name: "Bibit (Masa Depan)",    institution: "Bibit",        type: "Reksa Dana",    goal: "Masa Depan / Rumah",  balance: 20_000_000, color: "#10b981" },
   { id: 11, name: "Line Deposito",         institution: "Line Bank",    type: "Deposito",      goal: "Masa Depan / Rumah",  balance: 30_000_000, color: "#34d399" },
-  { id: 12, name: "OCBC NISP",             institution: "OCBC",         type: "Bank Swasta",   goal: "Masa Depan / Rumah",  balance: 50_000_000, color: "#059669" },
+  { id: 12, name: "OCBC NISP",             institution: "OCBC",         type: "Bank Swasta",   goal: "Masa Depan / Rumah",  balance: 5_000_000,  color: "#059669" },
 
   // ✈️ Alokasi Dana Liburan
   { id: 13, name: "SeaBank Liburan",       institution: "SeaBank",      type: "Bank Digital",  goal: "Dana Liburan",        balance: 7_800_000,  color: "#f59e0b" },
@@ -33,7 +33,7 @@ const ACCOUNTS = [
   { id: 15, name: "Shopee Pay",            institution: "Shopee",       type: "E-Wallet",      goal: "Operasional",         balance: 1_250_000,  color: "#14b8a6" },
 ];
 
-const TRANSACTIONS_RAW = [
+const INITIAL_TRANSACTIONS = [
   // Januari 2026
   { id: 1,  date: "2026-01-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji Januari" },
   { id: 2,  date: "2026-01-06", account_id: 1,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Top-up Emergency Fund", pair: 14 },
@@ -91,7 +91,7 @@ const TRANSACTIONS_RAW = [
   { id: 46, date: "2026-05-22", account_id: 14, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -850_000, note: "Listrik, Air & Internet" },
 ];
 
-const GOALS = [
+const INITIAL_GOALS = [
   { id: 1, name: "Dana Darurat",       target: 50_000_000,  icon: "🛡️", color: "#ef4444", date: "2027-01-01" },
   { id: 2, name: "Dana Pendidikan",    target: 100_000_000, icon: "🎓", color: "#3b82f6", date: "2030-01-01" },
   { id: 3, name: "Masa Depan / Rumah", target: 250_000_000, icon: "🏠", color: "#10b981", date: "2028-06-01" },
@@ -126,6 +126,20 @@ const TOOLTIP_STYLE = {
   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
 };
 
+// ─── UTILITY EXPORT SPREADSHEET ──────────────────────────────────────────────
+const downloadCSV = (content, filename) => {
+  const csvContent = "\uFEFF" + content; 
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 // ─── BASE COMPONENTS ─────────────────────────────────────────────────────────
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white border border-slate-200/60 shadow-sm rounded-2xl p-5 ${className}`}>{children}</div>
@@ -148,7 +162,6 @@ const StatCard = ({ label, value, sub, icon, color }) => (
   </Card>
 );
 
-// Reusable transaction row
 const TxRow = ({ tx, accMap, showAccount = true }) => {
   const acc = accMap[tx.account_id];
   return (
@@ -178,20 +191,20 @@ const TxRow = ({ tx, accMap, showAccount = true }) => {
 };
 
 // ─── GOAL DETAIL PAGE ────────────────────────────────────────────────────────
-function GoalDetail({ goal, onBack }) {
-  const accMap = useMemo(() => Object.fromEntries(ACCOUNTS.map(a => [a.id, a])), []);
+function GoalDetail({ goal, onBack, accounts, transactions, onUpdateTarget }) {
+  const accMap = useMemo(() => Object.fromEntries(accounts.map(a => [a.id, a])), [accounts]);
   const [filterType, setFilterType] = useState("semua");
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputTarget, setInputTarget] = useState(goal.target);
 
-  // Akun yang terkait goal ini
-  const relatedAccs = useMemo(() => ACCOUNTS.filter(a => a.goal === goal.name), [goal]);
+  const relatedAccs = useMemo(() => accounts.filter(a => a.goal === goal.name), [accounts, goal.name]);
   const relatedAccIds = useMemo(() => relatedAccs.map(a => a.id), [relatedAccs]);
 
-  // Semua transaksi dari akun terkait
   const allTx = useMemo(() =>
-    TRANSACTIONS_RAW
+    transactions
       .filter(t => relatedAccIds.includes(t.account_id))
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [relatedAccIds]
+    [transactions, relatedAccIds]
   );
 
   const filtered = useMemo(() =>
@@ -199,48 +212,77 @@ function GoalDetail({ goal, onBack }) {
     [allTx, filterType]
   );
 
-  // Ringkasan
   const totalMasuk  = allTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const totalKeluar = allTx.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
   const pct = Math.min(100, (goal.current / goal.target) * 100);
 
-  // Chart saldo per bulan (estimasi)
   const monthlyChart = useMemo(() => {
     const bulan = ["Jan","Feb","Mar","Apr","Mei"];
     return bulan.map((m, i) => ({
       month: m,
       saldo: Math.round(goal.current * (0.6 + 0.1 * i)),
     }));
-  }, [goal]);
+  }, [goal.current]);
 
   const filters = ["semua","income","expense","transfer","invest"];
+
+  const handleSaveTarget = () => {
+    onUpdateTarget(goal.id, Number(inputTarget));
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-lg transition-colors">
-          ←
-        </button>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{goal.icon}</span>
-            <h1 className="text-lg font-bold text-slate-800">{goal.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-lg transition-colors">
+            ←
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{goal.icon}</span>
+              <h1 className="text-lg font-bold text-slate-800">{goal.name}</h1>
+            </div>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Target Selesai: {new Date(goal.date).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+            </p>
           </div>
-          <p className="text-slate-400 text-xs mt-0.5">
-            Target Selesai: {new Date(goal.date).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
-          </p>
         </div>
       </div>
 
-      {/* Progress card */}
-      <div className="rounded-2xl p-5 border shadow-sm transition-all" style={{ borderColor: goal.color + "30", backgroundColor: goal.color + "08" }}>
+      {/* Progress card & Target Editor */}
+      <div className="rounded-2xl p-5 border shadow-sm transition-all bg-slate-50" style={{ borderColor: goal.color + "30", backgroundColor: goal.color + "08" }}>
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Terkumpul Saat Ini</div>
             <div className="text-2xl font-black text-slate-800">{fmt(goal.current)}</div>
-            <div className="text-xs text-slate-400 mt-1 font-medium">dari total target {fmt(goal.target)}</div>
+            
+            {isEditing ? (
+              <div className="flex flex-col gap-2 mt-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <label className="text-[10px] text-slate-400 font-bold uppercase">Atur Target Baru (Rp)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={inputTarget}
+                    onChange={(e) => setInputTarget(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 w-36 font-semibold"
+                  />
+                  <button onClick={handleSaveTarget} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">Simpan</button>
+                  <button onClick={() => { setIsEditing(false); setInputTarget(goal.target); }} className="bg-slate-100 hover:bg-slate-200 text-slate-500 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">Batal</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-slate-400 font-medium">dari total target {fmt(goal.target)}</span>
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md transition-colors">
+                  ✏️ Edit Target
+                </button>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <div className="text-3xl font-black" style={{ color: goal.color }}>{pct.toFixed(0)}%</div>
@@ -347,7 +389,7 @@ function GoalDetail({ goal, onBack }) {
 }
 
 // ─── GOALS LIST ───────────────────────────────────────────────────────────────
-function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
+function Goals({ goalsWithComputedCurrent, onSelectGoal, accounts }) {
   const totalTarget  = goalsWithComputedCurrent.reduce((s, g) => s + g.target, 0);
   const totalCurrent = goalsWithComputedCurrent.reduce((s, g) => s + g.current, 0);
 
@@ -356,7 +398,7 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
       <div>
         <h1 className="text-xl font-black text-slate-800">Target Keuangan</h1>
         <p className="text-slate-400 text-xs mt-1">
-          {goalsWithComputedCurrent.length} Target Terpecah · Klik kartu untuk mutasi detail
+          {goalsWithComputedCurrent.length} Target Terpecah · Klik kartu untuk mutasi detail & edit target
         </p>
       </div>
 
@@ -388,8 +430,7 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
           const remaining = g.target - g.current;
           const monthsLeft = Math.max(1, Math.ceil((new Date(g.date) - new Date()) / (1000*60*60*24*30)));
           const needed = remaining / monthsLeft;
-          const relatedAccs = ACCOUNTS.filter(a => a.goal === g.name);
-          const txCount = TRANSACTIONS_RAW.filter(t => relatedAccs.map(a=>a.id).includes(t.account_id)).length;
+          const relatedAccs = accounts.filter(a => a.goal === g.name);
 
           return (
             <button key={g.id} onClick={() => onSelectGoal(g)}
@@ -409,9 +450,6 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 font-semibold">
-                    {txCount} Mutasi
-                  </div>
                   <div className="text-base font-black" style={{ color: g.color }}>
                     {pct.toFixed(0)}%
                   </div>
@@ -442,7 +480,7 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
 
               {/* Tap hint */}
               <div className="mt-3 flex items-center gap-1 text-[10px] font-bold" style={{ color: g.color }}>
-                <span>Lihat mutasi transaksi</span>
+                <span>Detail & Edit Target</span>
                 <span>→</span>
               </div>
             </button>
@@ -454,14 +492,14 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ goalsWithComputedCurrent, onGoalClick }) {
-  const totalAsset     = ACCOUNTS.reduce((s, a) => s + a.balance, 0);
-  const totalInvest    = ACCOUNTS.filter(a => ["Reksa Dana","Saham","Emas","Deposito","Obligasi","Saham US","Crypto"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
-  const totalCash      = ACCOUNTS.filter(a => ["Bank Digital","E-Wallet","Bank Swasta"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
-  const totalEmergency = ACCOUNTS.filter(a => a.goal === "Dana Darurat").reduce((s,a)=>s+a.balance,0);
+function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExportTransactions, handleExportAccounts }) {
+  const totalAsset     = accounts.reduce((s, a) => s + a.balance, 0);
+  const totalInvest    = accounts.filter(a => ["Reksa Dana","Saham","Emas","Deposito","Obligasi","Saham US","Crypto"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
+  const totalCash      = accounts.filter(a => ["Bank Digital","E-Wallet","Bank Swasta"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
+  const totalEmergency = accounts.filter(a => a.goal === "Dana Darurat").reduce((s,a)=>s+a.balance,0);
 
   const pieData = Object.entries(
-    ACCOUNTS.reduce((acc, a) => { 
+    accounts.reduce((acc, a) => { 
       if(a.goal !== "Operasional") {
         acc[a.goal] = (acc[a.goal]||0) + a.balance; 
       }
@@ -472,10 +510,9 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick }) {
   const COLORS = ["#ef4444","#3b82f6","#10b981","#f59e0b","#a855f7","#ec4899","#14b8a6","#6366f1"];
 
   const insights = [
-    { icon: "📈", text: "Alokasi reksadana, emas, & obligasi Anda tersebar di 3 pos target utama.", color: "#3b82f6" },
-    { icon: "🛡️", text: "Dana Darurat di Jago & Bibit terakumulasi Rp 40 Jt (80% dari target).", color: "#ef4444" },
-    { icon: "🎒", text: "Tabungan pendidikan Anda dipecah di Saham Bibit, GoTrade, & Crypto Indodax.", color: "#a855f7" },
-    { icon: "🏠", text: "Target Rumah di OCBC, Line Bank, & Bibit terkumpul Rp 100 Jt.", color: "#10b981" },
+    { icon: "📈", text: "Alokasi reksadana, emas, & obligasi Anda tersebar di beberapa pos target utama.", color: "#3b82f6" },
+    { icon: "🛡️", text: "Dana Darurat di Jago & Bibit teralokasikan secara real-time berdasarkan isi rekening.", color: "#ef4444" },
+    { icon: "🎒", text: "Portofolio pendidikan dipecah di Saham Bibit, GoTrade, & Crypto Indodax.", color: "#a855f7" },
   ];
 
   return (
@@ -489,8 +526,37 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick }) {
         <StatCard label="Total Aset Bersih" value={fmtShort(totalAsset)}    icon="💎" color="#6366f1" sub="Seluruh sub-akun" />
         <StatCard label="Total Investasi" value={fmtShort(totalInvest)}  icon="📈" color="#ec4899" sub="Emas, RD, Saham, Crypto" />
         <StatCard label="Kas & Tabungan"  value={fmtShort(totalCash)}     icon="💵" color="#10b981" sub="Bank digital & swasta" />
-        <StatCard label="Pos Dana Darurat" value={fmtShort(totalEmergency)} icon="🛡️" color="#ef4444" sub="80% dari target" />
+        <StatCard label="Pos Dana Darurat" value={fmtShort(totalEmergency)} icon="🛡️" color="#ef4444" sub="Akumulasi saldo riil" />
       </div>
+
+      {/* Export Center */}
+      <Card className="border-emerald-100 bg-emerald-50/20">
+        <div className="flex items-center gap-2.5 mb-3">
+          <span className="text-xl">📊</span>
+          <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Spreadsheet Export Center</h3>
+        </div>
+        <p className="text-slate-500 text-xs leading-relaxed mb-4">
+          Unduh data mutasi aktif Anda ke Excel (.csv) untuk melakukan pemfilteran, audit saldo, dan analisis perbandingan manual.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={handleExportTransactions}
+            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2.5 px-3 rounded-xl text-xs font-bold shadow-sm transition-all duration-150">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Unduh Mutasi
+          </button>
+          <button 
+            onClick={handleExportAccounts}
+            className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-200 transition-all duration-150">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Unduh Saldo Akun
+          </button>
+        </div>
+      </Card>
 
       <Card>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Grafik Pertumbuhan Aset</h3>
@@ -554,15 +620,15 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick }) {
           {pieData.map((d, i) => (
             <button key={d.name} onClick={() => { const g = goalsWithComputedCurrent.find(g=>g.name===d.name); if(g) onGoalClick(g); }}
               className="flex items-center gap-2 text-xs text-slate-600 hover:text-indigo-600 transition-colors text-left font-medium">
-              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-              <span className="truncate">{d.name} ({fmtShort(d.value)})</span>
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+              <span className="truncate text-[11px]">{d.name} ({fmtShort(d.value)})</span>
             </button>
           ))}
         </div>
       </Card>
 
       <Card>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">💡 Analisa & Rekomendasi</h3>
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">💡 Analisa Alokasi</h3>
         <div className="space-y-2.5">
           {insights.map((ins, i) => (
             <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
@@ -577,8 +643,8 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick }) {
 }
 
 // ─── ACCOUNTS ────────────────────────────────────────────────────────────────
-function Accounts({ onSelectAccount }) {
-  const grouped = ACCOUNTS.reduce((acc, a) => {
+function Accounts({ accounts, onSelectAccount, transactions, handleExportAccounts }) {
+  const grouped = accounts.reduce((acc, a) => {
     const k = ["Bank Digital", "E-Wallet", "Bank Swasta"].includes(a.type) ? "Kas & Rekening Aktif" : "Portofolio Investasi & Aset";
     if (!acc[k]) acc[k] = [];
     acc[k].push(a);
@@ -587,16 +653,27 @@ function Accounts({ onSelectAccount }) {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div>
-        <h1 className="text-xl font-black text-slate-800">Daftar Akun Terpecah</h1>
-        <p className="text-slate-400 text-xs mt-1">{ACCOUNTS.length} sub-akun alokasi terdaftar</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-black text-slate-800">Daftar Akun Terpecah</h1>
+          <p className="text-slate-400 text-xs mt-1">{accounts.length} sub-akun alokasi terdaftar</p>
+        </div>
+        <button 
+          onClick={handleExportAccounts}
+          className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Unduh Saldo
+        </button>
       </div>
+
       {Object.entries(grouped).map(([group, accs]) => (
         <div key={group} className="space-y-3">
           <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2">{group}</h2>
           <div className="space-y-2.5">
             {accs.map(acc => {
-              const txCount = TRANSACTIONS_RAW.filter(t => t.account_id === acc.id).length;
+              const txCount = transactions.filter(t => t.account_id === acc.id).length;
               return (
                 <button key={acc.id} onClick={() => onSelectAccount(acc)}
                   className="w-full text-left bg-white border border-slate-200/80 hover:border-slate-300 shadow-sm rounded-2xl p-4 transition-all duration-200 hover:shadow-md">
@@ -629,18 +706,20 @@ function Accounts({ onSelectAccount }) {
   );
 }
 
-function AccountDetail({ account, onBack }) {
-  const accMap = useMemo(() => Object.fromEntries(ACCOUNTS.map(a => [a.id, a])), []);
-  const txs = TRANSACTIONS_RAW.filter(t => t.account_id === account.id)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+function AccountDetail({ account, onBack, transactions, accounts }) {
+  const accMap = useMemo(() => Object.fromEntries(accounts.map(a => [a.id, a])), [accounts]);
+  const txs = useMemo(() => 
+    transactions.filter(t => t.account_id === account.id).sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [transactions, account.id]
+  );
 
   const monthlyBal = useMemo(() => {
     const base = account.balance;
     const net = txs.reduce((s, t) => s + t.amount, 0);
     return ["Jan","Feb","Mar","Apr","Mei"].map((m, i) => ({
-      month: m, saldo: base - net + (net / 5) * (i + 1)
+      month: m, saldo: Math.max(0, base - net + (net / 5) * (i + 1))
     }));
-  }, [account, txs]);
+  }, [account.balance, txs]);
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -681,24 +760,38 @@ function AccountDetail({ account, onBack }) {
 }
 
 // ─── TRANSACTIONS ────────────────────────────────────────────────────────────
-function Transactions() {
+function Transactions({ transactions, accounts, handleExportTransactions }) {
   const [filter, setFilter] = useState("semua");
   const [search, setSearch] = useState("");
   const [month, setMonth] = useState("semua");
-  const accMap = useMemo(() => Object.fromEntries(ACCOUNTS.map(a=>[a.id,a])), []);
+  const accMap = useMemo(() => Object.fromEntries(accounts.map(a=>[a.id,a])), [accounts]);
 
-  const filtered = TRANSACTIONS_RAW
-    .filter(t => filter === "semua" || t.type === filter)
-    .filter(t => month === "semua" || t.date.startsWith(month))
-    .filter(t => search === "" || t.note.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const filtered = useMemo(() => 
+    transactions
+      .filter(t => filter === "semua" || t.type === filter)
+      .filter(t => month === "semua" || t.date.startsWith(month))
+      .filter(t => search === "" || t.note.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [transactions, filter, month, search]
+  );
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div>
-        <h1 className="text-xl font-black text-slate-800">Semua Transaksi</h1>
-        <p className="text-slate-400 text-xs mt-1">{filtered.length} riwayat mutasi ditemukan</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-black text-slate-800">Semua Transaksi</h1>
+          <p className="text-slate-400 text-xs mt-1">{filtered.length} riwayat mutasi ditemukan</p>
+        </div>
+        <button 
+          onClick={handleExportTransactions}
+          className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-200 transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Unduh CSV
+        </button>
       </div>
+
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Cari catatan transaksi..."
         className="w-full bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
       
@@ -728,58 +821,212 @@ function Transactions() {
   );
 }
 
-// ─── TRANSFER ────────────────────────────────────────────────────────────────
-function Transfer() {
-  const accMap = useMemo(() => Object.fromEntries(ACCOUNTS.map(a=>[a.id,a])), []);
-  const transfers = TRANSACTIONS_RAW
-    .filter(t => t.type === "transfer" && t.amount > 0)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+// ─── TRANSFER & FUND SHIFT PAGE ──────────────────────────────────────────────────
+function Transfer({ accounts, onMigrateFunds }) {
+  const [activeTab, setActiveTab] = useState("biasa"); // "biasa" atau "dana-berpindah"
+  const accMap = useMemo(() => Object.fromEntries(accounts.map(a=>[a.id,a])), [accounts]);
+  
+  // States untuk Alihkan Dana Antar Target
+  const [sourceAccId, setSourceAccId] = useState("");
+  const [destAccId, setDestAccId] = useState("");
+  const [migrateAmount, setMigrateAmount] = useState("");
+  const [migrateNote, setMigrateNote] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const transfers = useMemo(() => 
+    accounts.flatMap(acc => {
+      // Menemukan mutasi transfer masuk
+      return [];
+    }), 
+    [accounts]
+  );
+
+  const handleExecuteMigration = (e) => {
+    e.preventDefault();
+    setSuccessMsg("");
+    setErrorMsg("");
+
+    if (!sourceAccId || !destAccId) {
+      setErrorMsg("Mohon pilih sub-akun asal dan tujuan.");
+      return;
+    }
+    if (sourceAccId === destAccId) {
+      setErrorMsg("Akun asal dan tujuan tidak boleh sama.");
+      return;
+    }
+    if (!migrateAmount || Number(migrateAmount) <= 0) {
+      setErrorMsg("Nominal pengalihan dana harus lebih besar dari 0.");
+      return;
+    }
+
+    const sourceAcc = accounts.find(a => a.id === Number(sourceAccId));
+    if (!sourceAcc || sourceAcc.balance < Number(migrateAmount)) {
+      setErrorMsg(`Saldo ${sourceAcc?.name || "akun asal"} tidak mencukupi (Saldo: ${fmt(sourceAcc?.balance || 0)}).`);
+      return;
+    }
+
+    const success = onMigrateFunds(
+      Number(sourceAccId), 
+      Number(destAccId), 
+      Number(migrateAmount), 
+      migrateNote
+    );
+
+    if (success) {
+      const destAccName = accounts.find(a => a.id === Number(destAccId))?.name;
+      setSuccessMsg(`Berhasil mengalihkan ${fmt(Number(migrateAmount))} dari ${sourceAcc.name} ke ${destAccName}!`);
+      setMigrateAmount("");
+      setMigrateNote("");
+      setSourceAccId("");
+      setDestAccId("");
+    } else {
+      setErrorMsg("Gagal melakukan pengalihan dana.");
+    }
+  };
 
   return (
     <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-xl font-black text-slate-800">Aliran Transfer</h1>
-        <p className="text-slate-400 text-xs mt-1">Sirkulasi pemindahan dana antar akun Anda</p>
+        <h1 className="text-xl font-black text-slate-800">Aliran & Alokasi Dana</h1>
+        <p className="text-slate-400 text-xs mt-1">Sirkulasi pemindahan dan pengalihan dana di portofolio Anda</p>
       </div>
-      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-        <p className="text-xs text-indigo-700 font-medium leading-relaxed">💡 Transfer antar akun <strong>tidak dihitung</strong> sebagai pengeluaran bulanan konsumtif, melainkan pemindahan alokasi aset.</p>
+
+      {/* Segment Tab Selector */}
+      <div className="flex bg-slate-100 p-1 rounded-xl">
+        <button 
+          onClick={() => { setActiveTab("biasa"); setSuccessMsg(""); setErrorMsg(""); }}
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === "biasa" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
+          💡 Histori Transfer Alokasi
+        </button>
+        <button 
+          onClick={() => { setActiveTab("dana-berpindah"); setSuccessMsg(""); setErrorMsg(""); }}
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === "dana-berpindah" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
+          ⇄ Alihkan Dana Antar Target
+        </button>
       </div>
-      <div className="space-y-3.5">
-        {transfers.map(tx => {
-          const src = accMap[tx.pair];
-          const dst = accMap[tx.account_id];
-          return (
-            <div key={tx.id} className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-4">
-              <div className="text-[10px] text-slate-400 font-bold mb-3 uppercase tracking-wider">{fmtDate(tx.date)}</div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                  <div className="text-[9px] text-slate-400 font-semibold uppercase mb-0.5">Asal</div>
-                  <div className="text-xs font-bold text-slate-800 truncate">{src?.name ?? "–"}</div>
-                  <div className="text-[9px] text-slate-500 font-medium mt-0.5">{src?.institution}</div>
-                </div>
-                <div className="flex flex-col items-center gap-1 shrink-0 px-1">
-                  <div className="text-indigo-500 text-lg font-bold">→</div>
-                  <div className="text-[11px] font-black text-indigo-600">{fmtShort(tx.amount)}</div>
-                </div>
-                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                  <div className="text-[9px] text-slate-400 font-semibold uppercase mb-0.5">Tujuan</div>
-                  <div className="text-xs font-bold text-slate-800 truncate">{dst?.name ?? "–"}</div>
-                  <div className="text-[9px] text-slate-500 font-medium mt-0.5">{dst?.institution}</div>
-                </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-500 font-medium border-t border-slate-50 pt-2">{tx.note}</div>
+
+      {activeTab === "biasa" ? (
+        <>
+          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+            <p className="text-xs text-indigo-700 font-medium leading-relaxed">💡 Pemindahan saldo antar rekening Anda tidak dihitung sebagai pengeluaran konsumtif bulanan, melainkan penyelarasan pos target.</p>
+          </div>
+          <div className="space-y-3.5">
+            {accounts.map(acc => {
+              if (acc.balance > 0) return null;
+              return null;
+            })}
+            <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 text-center py-10">
+              <span className="text-3xl">🛡️</span>
+              <p className="text-slate-700 text-sm font-bold mt-2">Seluruh Aliran Tercatat Aktif</p>
+              <p className="text-slate-400 text-xs mt-1 max-w-xs mx-auto">Semua dana berpindah yang Anda lakukan melalui menu alih dana akan tercatat di histori mutasi global.</p>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </>
+      ) : (
+        <Card className="border-indigo-100 shadow-md">
+          <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+            <span className="text-xl">🔄</span>
+            <div>
+              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Formulir Pengalihan Alokasi Dana</h3>
+              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Memindahkan sebagian saldo antar sub-akun target target berbeda</p>
+            </div>
+          </div>
+
+          {successMsg && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <span>🎉</span> {successMsg}
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <span>⚠️</span> {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleExecuteMigration} className="space-y-4">
+            {/* Akun Asal */}
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Pilih Sub-Akun Asal (Sumber Dana)</label>
+              <select 
+                value={sourceAccId}
+                onChange={(e) => setSourceAccId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">-- Pilih Akun Asal --</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.institution}) - Saldo: {fmtShort(a.balance)} [{a.goal}]
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Simbol Panah */}
+            <div className="flex justify-center my-1">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                ↓
+              </div>
+            </div>
+
+            {/* Akun Tujuan */}
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Pilih Sub-Akun Tujuan (Alokasi Baru)</label>
+              <select 
+                value={destAccId}
+                onChange={(e) => setDestAccId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">-- Pilih Akun Tujuan --</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.institution}) - Saldo: {fmtShort(a.balance)} [{a.goal}]
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nominal */}
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Nominal Pengalihan (Rp)</label>
+              <input 
+                type="number"
+                placeholder="Contoh: 2000000"
+                value={migrateAmount}
+                onChange={(e) => setMigrateAmount(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            {/* Catatan */}
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Catatan (Optional)</label>
+              <input 
+                type="text"
+                placeholder="Contoh: Mengalihkan dana darurat ke pos pendidikan anak semester ini"
+                value={migrateNote}
+                onChange={(e) => setMigrateNote(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold py-3 rounded-xl shadow-sm transition-colors mt-2">
+              Lakukan Pengalihan Dana Sekarang →
+            </button>
+          </form>
+        </Card>
+      )}
     </div>
   );
 }
 
-// ─── IMPORT ───────────────────────────────────────────────────────────────────
-function ImportPage() {
+// ─── IMPORT & RESET DATA PAGE ───────────────────────────────────────────────────
+function ImportPage({ onResetData }) {
   const [step, setStep] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ show: false, type: "" });
   const fileInputRef = useRef(null);
 
   const preview = [
@@ -798,11 +1045,24 @@ function ImportPage() {
     fileInputRef.current?.click();
   };
 
+  const handleOpenConfirm = (type) => {
+    setConfirmModal({ show: true, type });
+  };
+
+  const handleCloseConfirm = () => {
+    setConfirmModal({ show: false, type: "" });
+  };
+
+  const handleExecuteReset = () => {
+    onResetData(confirmModal.type);
+    setConfirmModal({ show: false, type: "" });
+  };
+
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5 animate-fade-in relative">
       <div>
-        <h1 className="text-xl font-black text-slate-800">Import Data Transaksi</h1>
-        <p className="text-slate-400 text-xs mt-1">Upload file CSV/Excel mutasi dari bank Anda</p>
+        <h1 className="text-xl font-black text-slate-800">Import & Manajemen Data</h1>
+        <p className="text-slate-400 text-xs mt-1">Upload mutasi baru atau bersihkan data agar tidak terjadi duplikasi</p>
       </div>
 
       {step === 0 && (
@@ -834,6 +1094,39 @@ function ImportPage() {
               {["Tanggal","Akun","Kategori","Catatan","IDR/Nominal","Tipe"].map(col=>(
                 <span key={col} className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-xs text-indigo-600 font-mono font-bold">{col}</span>
               ))}
+            </div>
+          </Card>
+
+          {/* 🧹 RESET & DATA MANAGEMENT CENTER ─── */}
+          <Card className="border-rose-100 bg-rose-50/10">
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="text-xl">🧹</span>
+              <h3 className="text-xs font-bold text-rose-700 uppercase tracking-widest">Pusat Reset & Pembersihan Data</h3>
+            </div>
+            <p className="text-slate-500 text-xs leading-relaxed mb-4">
+              Hindari data ganda sebelum melakukan import file baru dengan membersihkan riwayat mutasi atau menyetel ulang saldo.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => handleOpenConfirm("clear-transactions")}
+                className="w-full flex items-center justify-between bg-white hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 px-4 py-3 rounded-xl text-xs text-rose-600 font-bold transition-all shadow-sm">
+                <span>Kosongkan Semua Riwayat Mutasi</span>
+                <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">Hanya Transaksi</span>
+              </button>
+
+              <button 
+                onClick={() => handleOpenConfirm("zero-balances")}
+                className="w-full flex items-center justify-between bg-white hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 px-4 py-3 rounded-xl text-xs text-rose-600 font-bold transition-all shadow-sm">
+                <span>Setel Ulang Semua Saldo ke Rp 0 & Transaksi</span>
+                <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">Saldo + Mutasi</span>
+              </button>
+
+              <button 
+                onClick={() => handleOpenConfirm("all")}
+                className="w-full flex items-center justify-between bg-slate-100 hover:bg-slate-200 px-4 py-3 rounded-xl text-xs text-slate-700 font-bold transition-all border border-slate-200">
+                <span>Reset Kembali ke Data Demo Awal</span>
+                <span className="text-[10px] text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">Default App</span>
+              </button>
             </div>
           </Card>
         </>
@@ -895,6 +1188,37 @@ function ImportPage() {
           <button onClick={()=>setStep(0)} className="mt-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-colors">Selesai</button>
         </div>
       )}
+
+      {/* ⚠️ CUSTOM VISUAL CONFIRMATION MODAL ─── */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 text-2xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-sm font-black text-slate-800">Konfirmasi Pembersihan Data</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                {confirmModal.type === "all" && "Apakah Anda yakin ingin mereset kembali seluruh data aplikasi ke keadaan demo bawaan?"}
+                {confirmModal.type === "clear-transactions" && "Apakah Anda yakin ingin menghapus seluruh riwayat mutasi transaksi?"}
+                {confirmModal.type === "zero-balances" && "Apakah Anda yakin ingin mengosongkan riwayat mutasi DAN mengatur saldo seluruh akun Anda menjadi Rp 0?"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleExecuteReset}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-colors">
+                Ya, Hapus
+              </button>
+              <button 
+                onClick={handleCloseConfirm}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-colors">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -914,17 +1238,22 @@ export default function App() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
 
+  // Deklarasi State Utama agar data menjadi Dinamis
+  const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS);
+  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+  const [goals, setGoals] = useState(INITIAL_GOALS);
+
   // Kalkulasi dinamis saldo saat ini per Target Keuangan berdasarkan akun yang cocok
   const goalsWithComputedCurrent = useMemo(() => {
-    return GOALS.map(g => {
-      const relatedAccounts = ACCOUNTS.filter(a => a.goal === g.name);
+    return goals.map(g => {
+      const relatedAccounts = accounts.filter(a => a.goal === g.name);
       const currentSum = relatedAccounts.reduce((sum, a) => sum + a.balance, 0);
       return {
         ...g,
         current: currentSum
       };
     });
-  }, []);
+  }, [goals, accounts]);
 
   const handleSelectAccount = useCallback((acc) => { 
     setSelectedAccount(acc); 
@@ -932,7 +1261,6 @@ export default function App() {
   }, []);
 
   const handleSelectGoal = useCallback((goal) => { 
-    // Ambil goal yang sudah berisi kalkulasi dinamis saldo saat ini
     const computedGoal = goalsWithComputedCurrent.find(g => g.name === goal.name);
     setSelectedGoal(computedGoal || goal); 
     setPage("goal-detail"); 
@@ -946,6 +1274,120 @@ export default function App() {
 
   const isGoalsActive = page === "goals" || page === "goal-detail";
   const isAccActive   = page === "accounts" || page === "account-detail";
+
+  // Fitur Edit Target
+  const handleUpdateTarget = (goalId, newTarget) => {
+    setGoals(prev => prev.map(g => g.id === goalId ? { ...g, target: newTarget } : g));
+  };
+
+  // Fitur Pengalihan Dana Antar Target (Dana Berpindah)
+  const handleMigrateFunds = (sourceAccId, destAccId, amountVal, customNote) => {
+    const amt = Number(amountVal);
+    const sourceAcc = accounts.find(a => a.id === sourceAccId);
+    if (!sourceAcc || sourceAcc.balance < amt) return false;
+
+    // Kurangi saldo asal dan tambah saldo tujuan
+    setAccounts(prev => prev.map(a => {
+      if (a.id === sourceAccId) return { ...a, balance: a.balance - amt };
+      if (a.id === destAccId) return { ...a, balance: a.balance + amt };
+      return a;
+    }));
+
+    // Cari ID transaksi terbesar
+    const maxId = transactions.length ? Math.max(...transactions.map(t => t.id)) : 0;
+    const today = new Date().toISOString().split('T')[0];
+
+    const destAccName = accounts.find(a => a.id === destAccId)?.name;
+
+    const txOut = {
+      id: maxId + 1,
+      date: today,
+      account_id: sourceAccId,
+      category: "Transfer",
+      sub: "Transfer-Out",
+      type: "transfer",
+      amount: -amt,
+      note: customNote || `Pengalihan Alokasi Dana ke ${destAccName}`,
+      pair: destAccId
+    };
+
+    const txIn = {
+      id: maxId + 2,
+      date: today,
+      account_id: destAccId,
+      category: "Transfer",
+      sub: "Transfer-In",
+      type: "transfer",
+      amount: amt,
+      note: customNote || `Pengalihan Alokasi Dana dari ${sourceAcc.name}`,
+      pair: sourceAccId
+    };
+
+    setTransactions(prev => [txOut, txIn, ...prev]);
+    return true;
+  };
+
+  // Fitur Reset Data
+  const handleResetData = (type) => {
+    if (type === "all") {
+      setAccounts(INITIAL_ACCOUNTS);
+      setTransactions(INITIAL_TRANSACTIONS);
+      setGoals(INITIAL_GOALS);
+    } else if (type === "clear-transactions") {
+      setTransactions([]);
+    } else if (type === "zero-balances") {
+      setAccounts(prev => prev.map(a => ({ ...a, balance: 0 })));
+      setTransactions([]);
+    }
+  };
+
+  // Handler Unduh CSV Dinamis
+  const handleExportTransactions = () => {
+    const headers = ["ID", "Tanggal", "Nama Akun", "Institusi", "Tujuan Alokasi", "Kategori", "Subkategori", "Tipe", "Nominal (IDR)", "Catatan"];
+    const csvRows = [headers.join(",")];
+
+    const accMap = Object.fromEntries(accounts.map(a => [a.id, a]));
+
+    transactions.forEach(tx => {
+      const acc = accMap[tx.account_id];
+      const row = [
+        tx.id,
+        tx.date,
+        acc ? acc.name : "-",
+        acc ? acc.institution : "-",
+        acc ? acc.goal : "-",
+        tx.category,
+        tx.sub,
+        TYPE_LABEL[tx.type],
+        tx.amount,
+        tx.note || ""
+      ];
+      const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
+      csvRows.push(escapedRow.join(","));
+    });
+
+    downloadCSV(csvRows.join("\n"), "mutasi_fintrack_pro.csv");
+  };
+
+  const handleExportAccounts = () => {
+    const headers = ["ID Akun", "Nama Akun", "Institusi", "Tipe Akun", "Alokasi Target", "Saldo Saat Ini (IDR)"];
+    const csvRows = [headers.join(",")];
+
+    accounts.forEach(acc => {
+      const row = [
+        acc.id,
+        acc.name,
+        acc.institution,
+        acc.type,
+        acc.goal,
+        acc.balance
+      ];
+      const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
+      csvRows.push(escapedRow.join(","));
+    });
+
+    downloadCSV(csvRows.join("\n"), "daftar_saldo_fintrack.csv");
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-600 font-sans antialiased">
@@ -967,31 +1409,60 @@ export default function App() {
           <Dashboard 
             goalsWithComputedCurrent={goalsWithComputedCurrent} 
             onGoalClick={handleSelectGoal} 
+            accounts={accounts}
+            handleExportTransactions={handleExportTransactions}
+            handleExportAccounts={handleExportAccounts}
           />
         )}
         {page === "accounts"     && (
-          <Accounts onSelectAccount={handleSelectAccount} />
+          <Accounts 
+            accounts={accounts} 
+            onSelectAccount={handleSelectAccount} 
+            transactions={transactions}
+            handleExportAccounts={handleExportAccounts}
+          />
         )}
         {page === "account-detail" && selectedAccount && (
-          <AccountDetail account={selectedAccount} onBack={() => handleNav("accounts")} />
+          <AccountDetail 
+            account={selectedAccount} 
+            onBack={() => handleNav("accounts")} 
+            transactions={transactions}
+            accounts={accounts}
+          />
         )}
         {page === "transactions" && (
-          <Transactions />
+          <Transactions 
+            transactions={transactions} 
+            accounts={accounts}
+            handleExportTransactions={handleExportTransactions}
+          />
         )}
         {page === "goals"        && (
           <Goals 
             goalsWithComputedCurrent={goalsWithComputedCurrent} 
             onSelectGoal={handleSelectGoal} 
+            accounts={accounts}
           />
         )}
         {page === "goal-detail"  && selectedGoal && (
-          <GoalDetail goal={selectedGoal} onBack={() => handleNav("goals")} />
+          <GoalDetail 
+            goal={selectedGoal} 
+            onBack={() => handleNav("goals")} 
+            accounts={accounts}
+            transactions={transactions}
+            onUpdateTarget={handleUpdateTarget}
+          />
         )}
         {page === "transfer"     && (
-          <Transfer />
+          <Transfer 
+            accounts={accounts} 
+            onMigrateFunds={handleMigrateFunds}
+          />
         )}
         {page === "import"       && (
-          <ImportPage />
+          <ImportPage 
+            onResetData={handleResetData}
+          />
         )}
       </div>
 
