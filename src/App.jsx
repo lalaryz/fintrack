@@ -5,105 +5,107 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-// ─── INITIAL MOCK DATA (SUDAH DIPECAH BERDASARKAN GOAL SEPERTI DI SPREADSHEET) ────────
+// ─── INITIAL ACCOUNTS (DISET PERSIS BERDASARKAN GAMBAR SPREADSHEET ANDA) ────────
 const INITIAL_ACCOUNTS = [
   // 🛡️ Alokasi Dana Darurat
-  { id: 1,  name: "JAGO Emergency",        institution: "Jago",         type: "Bank Digital",  goal: "Dana Darurat",        balance: 15_000_000, color: "#ef4444" },
-  { id: 2,  name: "Bibit Reksadana (DD)",  institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Darurat",        balance: 10_000_000, color: "#f87171" },
+  { id: 1,  name: "Bibit Reksadana (DD)",  institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Darurat",        balance: 10_000_000, color: "#ef4444" },
+  { id: 2,  name: "Jago DD",               institution: "Jago",         type: "Bank Digital",  goal: "Dana Darurat",        balance: 15_000_000, color: "#f87171" },
   { id: 3,  name: "Bibit Obligasi (DD)",   institution: "Bibit",        type: "Obligasi",      goal: "Dana Darurat",        balance: 15_000_000, color: "#fca5a5" },
 
+  // 🏠 Alokasi Dana Rumah
+  { id: 4,  name: "Bibit Reksadana (Rumah)",institution: "Bibit",       type: "Reksa Dana",    goal: "Dana Rumah",          balance: 25_000_000, color: "#10b981" },
+  { id: 5,  name: "Line Deposito (Rumah)",  institution: "Line Bank",    type: "Deposito",      goal: "Dana Rumah",          balance: 30_000_000, color: "#34d399" },
+  { id: 6,  name: "OCBC Taka Bunga",       institution: "OCBC",         type: "Bank Swasta",   goal: "Dana Rumah",          balance: 15_000_000, color: "#059669" },
+
+  // 👴 Alokasi Dana Pensiun
+  { id: 7,  name: "Bibit Reksadana (Pens)",institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Pensiun",        balance: 45_000_000, color: "#6366f1" },
+
   // 🎓 Alokasi Dana Pendidikan
-  { id: 4,  name: "JAGO Sekolah",          institution: "Jago",         type: "Bank Digital",  goal: "Dana Pendidikan",     balance: 10_500_000, color: "#3b82f6" },
-  { id: 5,  name: "Bibit Reksadana (Edu)", institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Pendidikan",     balance: 8_400_000,  color: "#60a5fa" },
-  { id: 6,  name: "Emas Logam Mulia",      institution: "Pluang",       type: "Emas",          goal: "Dana Pendidikan",     balance: 12_000_000, color: "#eab308" },
-  { id: 7,  name: "Saham Bibit (Edu)",     institution: "Bibit",        type: "Saham",         goal: "Dana Pendidikan",     balance: 15_000_000, color: "#a855f7" },
-  { id: 8,  name: "Saham GoTrade (Edu)",   institution: "GoTrade",      type: "Saham US",      goal: "Dana Pendidikan",     balance: 10_000_000, color: "#c084fc" },
-  { id: 9,  name: "Crypto Indodax (Edu)",  institution: "Indodax",      type: "Crypto",        goal: "Dana Pendidikan",     balance: 5_000_000,  color: "#ec4899" },
+  { id: 8,  name: "Jago Edu",              institution: "Jago",         type: "Bank Digital",  goal: "Dana Pendidikan",     balance: 8_500_000,  color: "#3b82f6" },
+  { id: 9,  name: "Bibit Reksadana (Edu)", institution: "Bibit",        type: "Reksa Dana",    goal: "Dana Pendidikan",     balance: 12_000_000, color: "#60a5fa" },
+  { id: 10, name: "Bibit Saham (Edu)",     institution: "Bibit",        type: "Saham",         goal: "Dana Pendidikan",     balance: 15_000_000, color: "#93c5fd" },
+  { id: 11, name: "Gotrade (Edu)",         institution: "Gotrade",      type: "Saham US",      goal: "Dana Pendidikan",     balance: 10_000_000, color: "#a855f7" },
+  { id: 12, name: "Indodax BTC (Edu)",     institution: "Indodax",      type: "Crypto",        goal: "Dana Pendidikan",     balance: 7_500_000,  color: "#ec4899" },
+  { id: 13, name: "Bareksa Emas (Edu)",    institution: "Bareksa",      type: "Emas",          goal: "Dana Pendidikan",     balance: 9_000_000,  color: "#eab308" },
 
-  // 🏠 Alokasi Masa Depan / Rumah
-  { id: 10, name: "Bibit (Masa Depan)",    institution: "Bibit",        type: "Reksa Dana",    goal: "Masa Depan / Rumah",  balance: 20_000_000, color: "#10b981" },
-  { id: 11, name: "Line Deposito",         institution: "Line Bank",    type: "Deposito",      goal: "Masa Depan / Rumah",  balance: 30_000_000, color: "#34d399" },
-  { id: 12, name: "OCBC NISP",             institution: "OCBC",         type: "Bank Swasta",   goal: "Masa Depan / Rumah",  balance: 5_000_000,  color: "#059669" },
+  // 🐏 Alokasi Qurban
+  { id: 14, name: "BCA USD (Qurban)",      institution: "BCA",          type: "Bank Swasta",   goal: "Qurban",              balance: 5_000_000,  color: "#d97706" },
 
-  // ✈️ Alokasi Dana Liburan
-  { id: 13, name: "SeaBank Liburan",       institution: "SeaBank",      type: "Bank Digital",  goal: "Dana Liburan",        balance: 7_800_000,  color: "#f59e0b" },
+  // 🕋 Alokasi Umroh/haji
+  { id: 15, name: "BCA USD (Umroh)",       institution: "BCA",          type: "Bank Swasta",   goal: "Umroh/haji",          balance: 12_000_000, color: "#0d9488" },
+  { id: 16, name: "OCBC USD (Umroh)",      institution: "OCBC",         type: "Bank Swasta",   goal: "Umroh/haji",          balance: 18_000_000, color: "#14b8a6" },
 
-  // 💵 Rekening Operasional (Tidak Di-lock ke Target Tertentu)
-  { id: 14, name: "BLU Operasional",       institution: "BLU BCA",      type: "Bank Digital",  goal: "Operasional",         balance: 5_200_000,  color: "#6366f1" },
-  { id: 15, name: "Shopee Pay",            institution: "Shopee",       type: "E-Wallet",      goal: "Operasional",         balance: 1_250_000,  color: "#14b8a6" },
+  // 💵 Alokasi THR
+  { id: 17, name: "Jago THR",              institution: "Jago",         type: "Bank Digital",  goal: "THR",                 balance: 6_000_000,  color: "#db2777" },
+
+  // 🏥 Alokasi Kesehatan
+  { id: 18, name: "Jago sehatyaa",         institution: "Jago",         type: "Bank Digital",  goal: "Kesehatan",           balance: 4_500_000,  color: "#06b6d4" },
+  { id: 19, name: "BLU dokter",            institution: "BLU BCA",      type: "Bank Digital",  goal: "Kesehatan",           balance: 3_500_000,  color: "#22d3ee" },
+
+  // ✈️ Alokasi Liburan
+  { id: 20, name: "Jago Holiday",          institution: "Jago",         type: "Bank Digital",  goal: "Liburan",             balance: 8_000_000,  color: "#fb923c" },
+
+  // 👨‍👩‍👧‍👦 Alokasi Keluarga
+  { id: 21, name: "Jago Fams",             institution: "Jago",         type: "Bank Digital",  goal: "Keluarga",            balance: 10_000_000, color: "#f43f5e" },
+
+  // 💵 Rekening Operasional (Untuk menampung gaji & pengeluaran bulanan aktif)
+  { id: 22, name: "BLU Operasional",       institution: "BLU BCA",      type: "Bank Digital",  goal: "Operasional",         balance: 5_200_000,  color: "#64748b" },
+  { id: 23, name: "Shopee Pay",            institution: "Shopee",       type: "E-Wallet",      goal: "Operasional",         balance: 1_250_000,  color: "#94a3b8" },
 ];
 
 const INITIAL_TRANSACTIONS = [
   // Januari 2026
-  { id: 1,  date: "2026-01-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji Januari" },
-  { id: 2,  date: "2026-01-06", account_id: 1,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Top-up Emergency Fund", pair: 14 },
-  { id: 3,  date: "2026-01-06", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_000_000, note: "Top-up Emergency Fund", pair: 1 },
-  { id: 4,  date: "2026-01-08", account_id: 15, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_500_000, note: "Top-up Shopee Pay", pair: 14 },
-  { id: 5,  date: "2026-01-08", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_500_000, note: "Top-up Shopee Pay", pair: 15 },
-  { id: 6,  date: "2026-01-10", account_id: 14, category: "Expense",   sub: "Makanan",      type: "expense",  amount:    -450_000, note: "Belanja Bulanan Alfamart" },
-  { id: 7,  date: "2026-01-12", account_id: 10, category: "Investasi", sub: "Reksa Dana",   type: "invest",   amount:   2_000_000, note: "Beli Bibit (Masa Depan)" },
-  { id: 8,  date: "2026-01-15", account_id: 14, category: "Expense",   sub: "Transportasi", type: "expense",  amount:    -320_000, note: "Bensin + Tol" },
-  { id: 9,  date: "2026-01-20", account_id: 4,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   2_500_000, note: "Dana Sekolah Anak", pair: 14 },
-  { id: 10, date: "2026-01-20", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -2_500_000, note: "Dana Sekolah Anak", pair: 4 },
-  { id: 11, date: "2026-01-25", account_id: 14, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -800_000, note: "Listrik + WiFi" },
+  { id: 1,  date: "2026-01-05", account_id: 22, category: "Income",    sub: "Gaji",         type: "income",   amount:  15_000_000, note: "Gaji Bulanan Masuk" },
+  { id: 2,  date: "2026-01-06", account_id: 2,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Top-up Jago DD (Darurat)", pair: 22 },
+  { id: 3,  date: "2026-01-06", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_000_000, note: "Top-up Jago DD (Darurat)", pair: 2 },
+  { id: 4,  date: "2026-01-08", account_id: 23, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_500_000, note: "Isi Saldo Shopee Pay", pair: 22 },
+  { id: 5,  date: "2026-01-08", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_500_000, note: "Isi Saldo Shopee Pay", pair: 23 },
+  { id: 6,  date: "2026-01-10", account_id: 22, category: "Expense",   sub: "Makanan",      type: "expense",  amount:    -450_000, note: "Belanja Mingguan Alfamart" },
+  { id: 7,  date: "2026-01-12", account_id: 4,  category: "Investasi", sub: "Reksa Dana",   type: "invest",   amount:   2_000_000, note: "Nabung Bibit Reksadana Rumah" },
+  { id: 8,  date: "2026-01-15", account_id: 22, category: "Expense",   sub: "Transportasi", type: "expense",  amount:    -320_000, note: "Pembayaran Tol & Bensin" },
+  { id: 9,  date: "2026-01-20", account_id: 8,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   2_500_000, note: "Alokasi Sekolah Jago Edu", pair: 22 },
+  { id: 10, date: "2026-01-20", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -2_500_000, note: "Alokasi Sekolah Jago Edu", pair: 8 },
+  { id: 11, date: "2026-01-25", account_id: 22, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -800_000, note: "Tagihan Listrik & WiFi" },
 
   // Februari 2026
-  { id: 12, date: "2026-02-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji Februari" },
-  { id: 13, date: "2026-02-06", account_id: 1,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Tabungan Dana Darurat", pair: 14 },
-  { id: 14, date: "2026-02-06", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_000_000, note: "Tabungan Dana Darurat", pair: 1 },
-  { id: 15, date: "2026-02-10", account_id: 7,  category: "Investasi", sub: "Saham",        type: "invest",   amount:   5_000_000, note: "Beli BBCA Saham Bibit" },
-  { id: 16, date: "2026-02-14", account_id: 13, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_500_000, note: "Nabung Liburan Khas", pair: 14 },
-  { id: 17, date: "2026-02-14", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_500_000, note: "Nabung Liburan Khas", pair: 13 },
-  { id: 18, date: "2026-02-20", account_id: 14, category: "Expense",   sub: "Makanan",      type: "expense",  amount:    -600_000, note: "Makan Valentine" },
-  { id: 19, date: "2026-02-25", account_id: 14, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -800_000, note: "Listrik + Internet" },
-  { id: 20, date: "2026-02-28", account_id: 5,  category: "Investasi", sub: "Reksa Dana",   type: "invest",   amount:   2_000_000, note: "Top-up Bibit (Pendidikan)" },
+  { id: 12, date: "2026-02-05", account_id: 22, category: "Income",    sub: "Gaji",         type: "income",   amount:  15_000_000, note: "Gaji Bulanan Masuk" },
+  { id: 13, date: "2026-02-06", account_id: 2,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Nabung Tambahan Jago DD", pair: 22 },
+  { id: 14, date: "2026-02-06", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_000_000, note: "Nabung Tambahan Jago DD", pair: 2 },
+  { id: 15, date: "2026-02-10", account_id: 17, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   2_000_000, note: "Cicilan Jago THR", pair: 22 },
+  { id: 16, date: "2026-02-10", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -2_000_000, note: "Cicilan Jago THR", pair: 17 },
+  { id: 17, date: "2026-02-15", account_id: 21, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_500_000, note: "Tabungan Jago Fams", pair: 22 },
+  { id: 18, date: "2026-02-15", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_500_000, note: "Tabungan Jago Fams", pair: 21 },
+  { id: 19, date: "2026-02-20", account_id: 15, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_000_000, note: "Tabung Umroh BCA USD", pair: 22 },
+  { id: 20, date: "2026-02-20", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_000_000, note: "Tabung Umroh BCA USD", pair: 15 },
 
   // Maret 2026
-  { id: 21, date: "2026-03-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji Maret" },
-  { id: 22, date: "2026-03-07", account_id: 1,  category: "Expense",   sub: "Kesehatan",    type: "expense",  amount:  -2_500_000, note: "Klinik & Obat" },
-  { id: 23, date: "2026-03-10", account_id: 6,  category: "Investasi", sub: "Emas",         type: "invest",   amount:   2_000_000, note: "Beli Emas Antam Pluang" },
-  { id: 24, date: "2026-03-15", account_id: 14, category: "Expense",   sub: "Pendidikan",   type: "expense",  amount:    -750_000, note: "Kursus Online" },
-  { id: 25, date: "2026-03-20", account_id: 3,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_000_000, note: "Top-up Bibit Obligasi DD", pair: 14 },
-  { id: 26, date: "2026-03-20", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_000_000, note: "Top-up Bibit Obligasi DD", pair: 3 },
-  { id: 27, date: "2026-03-25", account_id: 14, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -800_000, note: "Listrik + Internet" },
-
-  // April 2026
-  { id: 28, date: "2026-04-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji April" },
-  { id: 29, date: "2026-04-05", account_id: 14, category: "Income",    sub: "Bonus",        type: "income",   amount:   5_000_000, note: "Bonus Tahunan Q1" },
-  { id: 30, date: "2026-04-08", account_id: 11, category: "Investasi", sub: "Deposito",     type: "invest",   amount:  10_000_000, note: "Deposito Line (Masa Depan)" },
-  { id: 31, date: "2026-04-10", account_id: 8,  category: "Investasi", sub: "Saham",        type: "invest",   amount:   5_000_000, note: "Beli Saham GoTrade" },
-  { id: 32, date: "2026-04-15", account_id: 13, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   2_000_000, note: "Nabung Liburan", pair: 14 },
-  { id: 33, date: "2026-04-15", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -2_000_000, note: "Nabung Liburan", pair: 13 },
-  { id: 34, date: "2026-04-20", account_id: 10, category: "Investasi", sub: "Reksa Dana",   type: "invest",   amount:   3_000_000, note: "Top-up Bibit (Masa Depan)" },
-  { id: 35, date: "2026-04-25", account_id: 14, category: "Expense",   sub: "Belanja",      type: "expense",  amount:  -1_200_000, note: "Baju Lebaran" },
-  { id: 36, date: "2026-04-28", account_id: 14, category: "Expense",   sub: "Makanan",      type: "expense",  amount:    -900_000, note: "Makan Keluarga Lebaran" },
-
-  // Mei 2026
-  { id: 37, date: "2026-05-05", account_id: 14, category: "Income",    sub: "Gaji",         type: "income",   amount:  12_000_000, note: "Gaji Mei" },
-  { id: 38, date: "2026-05-06", account_id: 1,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   3_500_000, note: "Top-up Dana Darurat Jago", pair: 14 },
-  { id: 39, date: "2026-05-06", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -3_500_000, note: "Top-up Dana Darurat Jago", pair: 1 },
-  { id: 40, date: "2026-05-10", account_id: 4,  category: "Expense",   sub: "Pendidikan",   type: "expense",  amount:  -3_500_000, note: "Bayar SPP Sekolah Anak" },
-  { id: 41, date: "2026-05-12", account_id: 7,  category: "Income",    sub: "Dividen",      type: "income",   amount:     800_000, note: "Dividen Saham BBCA" },
-  { id: 42, date: "2026-05-15", account_id: 5,  category: "Investasi", sub: "Reksa Dana",   type: "invest",   amount:   2_000_000, note: "Top-up Bibit (Pendidikan)" },
-  { id: 43, date: "2026-05-18", account_id: 6,  category: "Investasi", sub: "Emas",         type: "invest",   amount:   1_000_000, note: "Beli Emas Antam Pluang" },
-  { id: 44, date: "2026-05-20", account_id: 3,  category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_500_000, note: "Nabung Bibit Obligasi DD", pair: 14 },
-  { id: 45, date: "2026-05-20", account_id: 14, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_500_000, note: "Nabung Bibit Obligasi DD", pair: 3 },
-  { id: 46, date: "2026-05-22", account_id: 14, category: "Expense",   sub: "Utilitas",     type: "expense",  amount:    -850_000, note: "Listrik, Air & Internet" },
+  { id: 21, date: "2026-03-05", account_id: 22, category: "Income",    sub: "Gaji",         type: "income",   amount:  15_000_000, note: "Gaji Bulanan Masuk" },
+  { id: 22, date: "2026-03-07", account_id: 18, category: "Expense",   sub: "Kesehatan",    type: "expense",  amount:  -1_200_000, note: "Biaya Dokter & Obat Sehat" },
+  { id: 23, date: "2026-03-10", account_id: 13, category: "Investasi", sub: "Emas",         type: "invest",   amount:   1_000_000, note: "Beli Bareksa Emas Edu" },
+  { id: 24, date: "2026-03-15", account_id: 11, category: "Investasi", sub: "Saham US",      type: "invest",   amount:   2_500_000, note: "Top-up Gotrade Edu" },
+  { id: 25, date: "2026-03-22", account_id: 20, category: "Transfer",  sub: "Transfer-In",  type: "transfer", amount:   1_000_000, note: "Cicilan Jago Holiday", pair: 22 },
+  { id: 26, date: "2026-03-22", account_id: 22, category: "Transfer",  sub: "Transfer-Out", type: "transfer", amount:  -1_000_000, note: "Cicilan Jago Holiday", pair: 20 },
 ];
 
 const INITIAL_GOALS = [
   { id: 1, name: "Dana Darurat",       target: 50_000_000,  icon: "🛡️", color: "#ef4444", date: "2027-01-01" },
-  { id: 2, name: "Dana Pendidikan",    target: 100_000_000, icon: "🎓", color: "#3b82f6", date: "2030-01-01" },
-  { id: 3, name: "Masa Depan / Rumah", target: 250_000_000, icon: "🏠", color: "#10b981", date: "2028-06-01" },
-  { id: 4, name: "Dana Liburan",       target: 20_000_000,  icon: "✈️", color: "#f59e0b", date: "2026-12-01" },
+  { id: 2, name: "Dana Rumah",         target: 150_000_000, icon: "🏠", color: "#10b981", date: "2028-06-01" },
+  { id: 3, name: "Dana Pensiun",       target: 300_000_000, icon: "👴", color: "#6366f1", date: "2045-01-01" },
+  { id: 4, name: "Dana Pendidikan",    target: 120_000_000, icon: "🎓", color: "#3b82f6", date: "2030-01-01" },
+  { id: 5, name: "Qurban",             target: 10_000_000,  icon: "🐏", color: "#d97706", date: "2026-06-15" },
+  { id: 6, name: "Umroh/haji",         target: 100_000_000, icon: "🕋", color: "#0d9488", date: "2029-12-01" },
+  { id: 7, name: "THR",                target: 15_000_000,  icon: "💵", color: "#db2777", date: "2027-04-01" },
+  { id: 8, name: "Kesehatan",          target: 20_000_000,  icon: "🏥", color: "#06b6d4", date: "2027-06-01" },
+  { id: 9, name: "Liburan",            target: 15_000_000,  icon: "✈️", color: "#fb923c", date: "2026-12-01" },
+  { id: 10, name: "Keluarga",          target: 25_000_000,  icon: "👨‍👩‍👧‍👦", color: "#f43f5e", date: "2027-01-01" },
 ];
 
 const MONTHLY_DATA = [
-  { month: "Jan", income: 12_000_000, expense: 5_070_000, invest: 2_000_000, asset: 132_000_000 },
-  { month: "Feb", income: 12_000_000, expense: 5_400_000, invest: 7_000_000, asset: 141_000_000 },
-  { month: "Mar", income: 12_000_000, expense: 5_050_000, invest: 2_000_000, asset: 148_000_000 },
-  { month: "Apr", income: 17_000_000, expense: 7_100_000, invest: 18_000_000, asset: 158_000_000 },
-  { month: "Mei", income: 12_800_000, expense: 5_850_000, invest: 3_000_000, asset: 212_300_000 },
+  { month: "Jan", income: 15_000_000, expense: 5_070_000, invest: 2_000_000, asset: 215_000_000 },
+  { month: "Feb", income: 15_000_000, expense: 5_400_000, invest: 7_000_000, asset: 228_350_000 },
+  { month: "Mar", income: 15_000_000, expense: 6_550_000, invest: 5_500_000, asset: 236_150_000 },
+  { month: "Apr", income: 15_000_000, expense: 5_000_000, invest: 7_000_000, asset: 249_300_000 },
+  { month: "Mei", income: 15_800_000, expense: 5_850_000, invest: 3_000_000, asset: 298_450_000 },
 ];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -146,7 +148,7 @@ const Card = ({ children, className = "" }) => (
 );
 
 const Badge = ({ children, color }) => (
-  <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
+  <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
     style={{ backgroundColor: color + "15", color }}>{children}</span>
 );
 
@@ -157,7 +159,7 @@ const StatCard = ({ label, value, sub, icon, color }) => (
     <div>
       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">{label}</div>
       <div className="text-lg font-extrabold text-slate-800">{value}</div>
-      {sub && <div className="text-[11px] text-slate-500 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[11px] text-slate-500 mt-0.5 leading-none">{sub}</div>}
     </div>
   </Card>
 );
@@ -172,12 +174,12 @@ const TxRow = ({ tx, accMap, showAccount = true }) => {
           {TYPE_ICON[tx.type]}
         </div>
         <div>
-          <div className="text-sm font-semibold text-slate-800">{tx.note}</div>
+          <div className="text-sm font-semibold text-slate-800 leading-tight">{tx.note}</div>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className="text-xs text-slate-400">{fmtDate(tx.date)}</span>
             {showAccount && acc && <>
               <span className="text-slate-300">·</span>
-              <span className="text-xs text-slate-500 font-medium">{acc.name}</span>
+              <span className="text-xs text-slate-500 font-semibold">{acc.name}</span>
             </>}
             <Badge color={TYPE_COLOR[tx.type]}>{TYPE_LABEL[tx.type]}</Badge>
           </div>
@@ -191,7 +193,7 @@ const TxRow = ({ tx, accMap, showAccount = true }) => {
 };
 
 // ─── GOAL DETAIL PAGE ────────────────────────────────────────────────────────
-function GoalDetail({ goal, onBack, accounts, transactions, onUpdateTarget }) {
+function GoalDetail({ goal, onBack, accounts, transactions, onUpdateTarget, handleExportGroup }) {
   const accMap = useMemo(() => Object.fromEntries(accounts.map(a => [a.id, a])), [accounts]);
   const [filterType, setFilterType] = useState("semua");
   const [isEditing, setIsEditing] = useState(false);
@@ -253,7 +255,7 @@ function GoalDetail({ goal, onBack, accounts, transactions, onUpdateTarget }) {
       </div>
 
       {/* Progress card & Target Editor */}
-      <div className="rounded-2xl p-5 border shadow-sm transition-all bg-slate-50" style={{ borderColor: goal.color + "30", backgroundColor: goal.color + "08" }}>
+      <div className="rounded-2xl p-5 border shadow-sm transition-all bg-white" style={{ borderColor: goal.color + "30", backgroundColor: goal.color + "08" }}>
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Terkumpul Saat Ini</div>
@@ -293,6 +295,22 @@ function GoalDetail({ goal, onBack, accounts, transactions, onUpdateTarget }) {
             style={{ width: `${pct}%`, backgroundColor: goal.color }} />
         </div>
       </div>
+
+      {/* 📥 EXPORT KHUSUS KELOMPOK INI */}
+      <Card className="border-emerald-100 bg-emerald-50/10 flex items-center justify-between gap-4 p-4">
+        <div>
+          <div className="text-xs font-extrabold text-slate-700">Audit Khusus {goal.name}</div>
+          <p className="text-[10px] text-slate-400 mt-1">Bandingkan saldo & mutasi kelompok ini di Excel</p>
+        </div>
+        <button
+          onClick={() => handleExportGroup(goal.name, "transactions")}
+          className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all shrink-0">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Unduh CSV Kelompok
+        </button>
+      </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
@@ -398,7 +416,7 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal, accounts }) {
       <div>
         <h1 className="text-xl font-black text-slate-800">Target Keuangan</h1>
         <p className="text-slate-400 text-xs mt-1">
-          {goalsWithComputedCurrent.length} Target Terpecah · Klik kartu untuk mutasi detail & edit target
+          {goalsWithComputedCurrent.length} Pos Kelompok Dana Terdaftar · Klik untuk mutasi & audit detail
         </p>
       </div>
 
@@ -406,11 +424,11 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal, accounts }) {
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider mb-1">Total Dana Terkumpul</div>
+            <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider mb-1">Total Seluruh Dana Terkumpul</div>
             <div className="text-2xl font-black text-indigo-900">{fmtShort(totalCurrent)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Kebutuhan</div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Target Gabungan</div>
             <div className="text-sm font-extrabold text-indigo-700/80">dari {fmtShort(totalTarget)}</div>
           </div>
         </div>
@@ -427,7 +445,7 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal, accounts }) {
       <div className="space-y-3.5">
         {goalsWithComputedCurrent.map(g => {
           const pct = Math.min(100, (g.current / g.target) * 100);
-          const remaining = g.target - g.current;
+          const remaining = Math.max(0, g.target - g.current);
           const monthsLeft = Math.max(1, Math.ceil((new Date(g.date) - new Date()) / (1000*60*60*24*30)));
           const needed = remaining / monthsLeft;
           const relatedAccs = accounts.filter(a => a.goal === g.name);
@@ -492,7 +510,9 @@ function Goals({ goalsWithComputedCurrent, onSelectGoal, accounts }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExportTransactions, handleExportAccounts }) {
+function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExportGroup }) {
+  const [exportScope, setExportScope] = useState("semua"); // "semua" atau nama Goal spesifik
+
   const totalAsset     = accounts.reduce((s, a) => s + a.balance, 0);
   const totalInvest    = accounts.filter(a => ["Reksa Dana","Saham","Emas","Deposito","Obligasi","Saham US","Crypto"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
   const totalCash      = accounts.filter(a => ["Bank Digital","E-Wallet","Bank Swasta"].includes(a.type)).reduce((s,a)=>s+a.balance,0);
@@ -507,12 +527,11 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExpo
     }, {})
   ).map(([name, value]) => ({ name, value }));
 
-  const COLORS = ["#ef4444","#3b82f6","#10b981","#f59e0b","#a855f7","#ec4899","#14b8a6","#6366f1"];
+  const COLORS = ["#ef4444","#10b981","#6366f1","#3b82f6","#d97706","#0d9488","#db2777","#06b6d4","#fb923c","#f43f5e"];
 
   const insights = [
-    { icon: "📈", text: "Alokasi reksadana, emas, & obligasi Anda tersebar di beberapa pos target utama.", color: "#3b82f6" },
-    { icon: "🛡️", text: "Dana Darurat di Jago & Bibit teralokasikan secara real-time berdasarkan isi rekening.", color: "#ef4444" },
-    { icon: "🎒", text: "Portofolio pendidikan dipecah di Saham Bibit, GoTrade, & Crypto Indodax.", color: "#a855f7" },
+    { icon: "📈", text: "Portfolio Anda telah sukses dipecah ke masing-masing sub-akun target secara real-time.", color: "#3b82f6" },
+    { icon: "📊", text: "Fitur ekspor CSV di bawah kini mendukung pengunduhan per pos kelompok terpisah.", color: "#10b981" },
   ];
 
   return (
@@ -529,18 +548,33 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExpo
         <StatCard label="Pos Dana Darurat" value={fmtShort(totalEmergency)} icon="🛡️" color="#ef4444" sub="Akumulasi saldo riil" />
       </div>
 
-      {/* Export Center */}
+      {/* Export Center (Mendukung unduh per kelompok dana) */}
       <Card className="border-emerald-100 bg-emerald-50/20">
         <div className="flex items-center gap-2.5 mb-3">
           <span className="text-xl">📊</span>
-          <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Spreadsheet Export Center</h3>
+          <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Spreadsheet Export Center center</h3>
         </div>
         <p className="text-slate-500 text-xs leading-relaxed mb-4">
-          Unduh data mutasi aktif Anda ke Excel (.csv) untuk melakukan pemfilteran, audit saldo, dan analisis perbandingan manual.
+          Unduh data mutasi aktif Anda ke Excel (.csv) secara terpisah per kelompok dana agar mudah dicocokkan dengan spreadsheet Anda.
         </p>
+        
+        {/* Dropdown Selector */}
+        <div className="mb-4 bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-1.5 shadow-xs">
+          <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Pilih Kelompok Alokasi Dana:</label>
+          <select 
+            value={exportScope} 
+            onChange={(e) => setExportScope(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-xs text-slate-700 font-bold focus:outline-none">
+            <option value="semua">📂 Semua Kelompok (Gabungan)</option>
+            {goalsWithComputedCurrent.map(g => (
+              <option key={g.id} value={g.name}>{g.icon} {g.name}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <button 
-            onClick={handleExportTransactions}
+            onClick={() => handleExportGroup(exportScope, "transactions")}
             className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2.5 px-3 rounded-xl text-xs font-bold shadow-sm transition-all duration-150">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -548,7 +582,7 @@ function Dashboard({ goalsWithComputedCurrent, onGoalClick, accounts, handleExpo
             Unduh Mutasi
           </button>
           <button 
-            onClick={handleExportAccounts}
+            onClick={() => handleExportGroup(exportScope, "accounts")}
             className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-200 transition-all duration-150">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -686,7 +720,7 @@ function Accounts({ accounts, onSelectAccount, transactions, handleExportAccount
                       <div>
                         <div className="text-sm font-bold text-slate-800">{acc.name}</div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-slate-400 font-medium">{acc.institution}</span>
+                          <span className="text-xs text-slate-400 font-semibold">{acc.institution}</span>
                           <Badge color={acc.color}>{acc.goal}</Badge>
                         </div>
                       </div>
@@ -824,7 +858,6 @@ function Transactions({ transactions, accounts, handleExportTransactions }) {
 // ─── TRANSFER & FUND SHIFT PAGE ──────────────────────────────────────────────────
 function Transfer({ accounts, onMigrateFunds }) {
   const [activeTab, setActiveTab] = useState("biasa"); // "biasa" atau "dana-berpindah"
-  const accMap = useMemo(() => Object.fromEntries(accounts.map(a=>[a.id,a])), [accounts]);
   
   // States untuk Alihkan Dana Antar Target
   const [sourceAccId, setSourceAccId] = useState("");
@@ -833,14 +866,6 @@ function Transfer({ accounts, onMigrateFunds }) {
   const [migrateNote, setMigrateNote] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-
-  const transfers = useMemo(() => 
-    accounts.flatMap(acc => {
-      // Menemukan mutasi transfer masuk
-      return [];
-    }), 
-    [accounts]
-  );
 
   const handleExecuteMigration = (e) => {
     e.preventDefault();
@@ -897,7 +922,7 @@ function Transfer({ accounts, onMigrateFunds }) {
         <button 
           onClick={() => { setActiveTab("biasa"); setSuccessMsg(""); setErrorMsg(""); }}
           className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === "biasa" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
-          💡 Histori Transfer Alokasi
+          💡 Panduan Aliran Saldo
         </button>
         <button 
           onClick={() => { setActiveTab("dana-berpindah"); setSuccessMsg(""); setErrorMsg(""); }}
@@ -911,25 +936,19 @@ function Transfer({ accounts, onMigrateFunds }) {
           <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
             <p className="text-xs text-indigo-700 font-medium leading-relaxed">💡 Pemindahan saldo antar rekening Anda tidak dihitung sebagai pengeluaran konsumtif bulanan, melainkan penyelarasan pos target.</p>
           </div>
-          <div className="space-y-3.5">
-            {accounts.map(acc => {
-              if (acc.balance > 0) return null;
-              return null;
-            })}
-            <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 text-center py-10">
-              <span className="text-3xl">🛡️</span>
-              <p className="text-slate-700 text-sm font-bold mt-2">Seluruh Aliran Tercatat Aktif</p>
-              <p className="text-slate-400 text-xs mt-1 max-w-xs mx-auto">Semua dana berpindah yang Anda lakukan melalui menu alih dana akan tercatat di histori mutasi global.</p>
-            </div>
+          <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 text-center py-10">
+            <span className="text-3xl">🛡️</span>
+            <p className="text-slate-700 text-sm font-bold mt-2">Seluruh Aliran Tercatat Aktif</p>
+            <p className="text-slate-400 text-xs mt-1 max-w-xs mx-auto">Semua dana berpindah yang Anda lakukan melalui menu alih dana akan tercatat di histori mutasi global.</p>
           </div>
         </>
       ) : (
-        <Card className="border-indigo-100 shadow-md">
+        <Card className="border-indigo-100 shadow-md bg-white">
           <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
             <span className="text-xl">🔄</span>
             <div>
               <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Formulir Pengalihan Alokasi Dana</h3>
-              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Memindahkan sebagian saldo antar sub-akun target target berbeda</p>
+              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Memindahkan sebagian saldo antar sub-akun target berbeda</p>
             </div>
           </div>
 
@@ -1002,7 +1021,7 @@ function Transfer({ accounts, onMigrateFunds }) {
               <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5">Catatan (Optional)</label>
               <input 
                 type="text"
-                placeholder="Contoh: Mengalihkan dana darurat ke pos pendidikan anak semester ini"
+                placeholder="Contoh: Mengalihkan dari Dana Darurat ke Dana Pendidikan semester ini"
                 value={migrateNote}
                 onChange={(e) => setMigrateNote(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -1030,9 +1049,9 @@ function ImportPage({ onResetData }) {
   const fileInputRef = useRef(null);
 
   const preview = [
-    { date:"2026-05-01", account:"JAGO Sekolah", category:"Income",   sub:"Gaji",         note:"Gaji Mei",    amount:"12.000.000", type:"Income" },
-    { date:"2026-05-05", account:"BLU",  category:"Expense",  sub:"Makanan",      note:"Alfamart",    amount:"150.000",    type:"Expense" },
-    { date:"2026-05-10", account:"JAGO Emergency", category:"Transfer", sub:"Transfer-Out", note:"Top-up BLU",  amount:"2.000.000",  type:"Transfer" },
+    { date:"2026-05-01", account:"Jago Edu", category:"Income",   sub:"Gaji",         note:"Gaji Mei",    amount:"15.000.000", type:"Income" },
+    { date:"2026-05-05", account:"BLU Operasional",  category:"Expense",  sub:"Makanan",      note:"Alfamart",    amount:"150.000",    type:"Expense" },
+    { date:"2026-05-10", account:"Jago DD", category:"Transfer", sub:"Transfer-Out", note:"Top-up BLU",  amount:"2.000.000",  type:"Transfer" },
   ];
 
   const handleFileChange = (e) => {
@@ -1307,7 +1326,7 @@ export default function App() {
       sub: "Transfer-Out",
       type: "transfer",
       amount: -amt,
-      note: customNote || `Pengalihan Alokasi Dana ke ${destAccName}`,
+      note: customNote || `Dana Alokasi Berpindah ke ${destAccName}`,
       pair: destAccId
     };
 
@@ -1319,7 +1338,7 @@ export default function App() {
       sub: "Transfer-In",
       type: "transfer",
       amount: amt,
-      note: customNote || `Pengalihan Alokasi Dana dari ${sourceAcc.name}`,
+      note: customNote || `Dana Alokasi Berpindah dari ${sourceAcc.name}`,
       pair: sourceAccId
     };
 
@@ -1341,58 +1360,66 @@ export default function App() {
     }
   };
 
-  // Handler Unduh CSV Dinamis
-  const handleExportTransactions = () => {
-    const headers = ["ID", "Tanggal", "Nama Akun", "Institusi", "Tujuan Alokasi", "Kategori", "Subkategori", "Tipe", "Nominal (IDR)", "Catatan"];
-    const csvRows = [headers.join(",")];
+  // 📥 HANDLE EXPORT KHUSUS GROUP/KELOMPOK DANA YANG DIPILIH
+  const handleExportGroup = (groupName, type) => {
+    const isAll = groupName === "semua";
+    const filteredAccs = isAll ? accounts : accounts.filter(a => a.goal === groupName);
+    const filteredAccIds = filteredAccs.map(a => a.id);
 
-    const accMap = Object.fromEntries(accounts.map(a => [a.id, a]));
+    if (type === "transactions") {
+      const headers = ["ID Transaksi", "Tanggal", "Nama Akun", "Institusi", "Tujuan Alokasi", "Kategori", "Subkategori", "Tipe", "Nominal (IDR)", "Catatan"];
+      const csvRows = [headers.join(",")];
+      const accMap = Object.fromEntries(accounts.map(a => [a.id, a]));
 
-    transactions.forEach(tx => {
-      const acc = accMap[tx.account_id];
-      const row = [
-        tx.id,
-        tx.date,
-        acc ? acc.name : "-",
-        acc ? acc.institution : "-",
-        acc ? acc.goal : "-",
-        tx.category,
-        tx.sub,
-        TYPE_LABEL[tx.type],
-        tx.amount,
-        tx.note || ""
-      ];
-      const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
-      csvRows.push(escapedRow.join(","));
-    });
+      const filteredTxs = transactions.filter(t => filteredAccIds.includes(t.account_id));
 
-    downloadCSV(csvRows.join("\n"), "mutasi_fintrack_pro.csv");
-  };
+      filteredTxs.forEach(tx => {
+        const acc = accMap[tx.account_id];
+        const row = [
+          tx.id,
+          tx.date,
+          acc ? acc.name : "-",
+          acc ? acc.institution : "-",
+          acc ? acc.goal : "-",
+          tx.category,
+          tx.sub,
+          TYPE_LABEL[tx.type],
+          tx.amount,
+          tx.note || ""
+        ];
+        const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
+        csvRows.push(escapedRow.join(","));
+      });
 
-  const handleExportAccounts = () => {
-    const headers = ["ID Akun", "Nama Akun", "Institusi", "Tipe Akun", "Alokasi Target", "Saldo Saat Ini (IDR)"];
-    const csvRows = [headers.join(",")];
+      const safeFilename = isAll ? "semua_mutasi" : groupName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      downloadCSV(csvRows.join("\n"), `mutasi_kelompok_${safeFilename}.csv`);
+    } else {
+      // accounts
+      const headers = ["ID Akun", "Nama Akun", "Institusi", "Tipe Akun", "Alokasi Target", "Saldo Saat Ini (IDR)"];
+      const csvRows = [headers.join(",")];
 
-    accounts.forEach(acc => {
-      const row = [
-        acc.id,
-        acc.name,
-        acc.institution,
-        acc.type,
-        acc.goal,
-        acc.balance
-      ];
-      const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
-      csvRows.push(escapedRow.join(","));
-    });
+      filteredAccs.forEach(acc => {
+        const row = [
+          acc.id,
+          acc.name,
+          acc.institution,
+          acc.type,
+          acc.goal,
+          acc.balance
+        ];
+        const escapedRow = row.map(val => `"${('' + val).replace(/"/g, '""')}"`);
+        csvRows.push(escapedRow.join(","));
+      });
 
-    downloadCSV(csvRows.join("\n"), "daftar_saldo_fintrack.csv");
+      const safeFilename = isAll ? "semua_saldo" : groupName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      downloadCSV(csvRows.join("\n"), `saldo_kelompok_${safeFilename}.csv`);
+    }
   };
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-600 font-sans antialiased">
       {/* Header Bar */}
-      <div className="sticky top-0 Pin-20 bg-white/90 backdrop-blur border-b border-slate-200/50 px-4 py-3.5 flex items-center justify-between shadow-sm z-30">
+      <div className="sticky top-0 bg-white/90 backdrop-blur border-b border-slate-200/50 px-4 py-3.5 flex items-center justify-between shadow-sm z-30">
         <div className="flex items-center gap-2">
           <span className="text-xl">💎</span>
           <span className="font-black text-slate-800 tracking-tight text-sm">FinTrack Pro</span>
@@ -1410,8 +1437,7 @@ export default function App() {
             goalsWithComputedCurrent={goalsWithComputedCurrent} 
             onGoalClick={handleSelectGoal} 
             accounts={accounts}
-            handleExportTransactions={handleExportTransactions}
-            handleExportAccounts={handleExportAccounts}
+            handleExportGroup={handleExportGroup}
           />
         )}
         {page === "accounts"     && (
@@ -1419,7 +1445,7 @@ export default function App() {
             accounts={accounts} 
             onSelectAccount={handleSelectAccount} 
             transactions={transactions}
-            handleExportAccounts={handleExportAccounts}
+            handleExportAccounts={() => handleExportGroup("semua", "accounts")}
           />
         )}
         {page === "account-detail" && selectedAccount && (
@@ -1434,7 +1460,7 @@ export default function App() {
           <Transactions 
             transactions={transactions} 
             accounts={accounts}
-            handleExportTransactions={handleExportTransactions}
+            handleExportTransactions={() => handleExportGroup("semua", "transactions")}
           />
         )}
         {page === "goals"        && (
@@ -1451,6 +1477,7 @@ export default function App() {
             accounts={accounts}
             transactions={transactions}
             onUpdateTarget={handleUpdateTarget}
+            handleExportGroup={handleExportGroup}
           />
         )}
         {page === "transfer"     && (
